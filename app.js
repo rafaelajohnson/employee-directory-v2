@@ -1,21 +1,21 @@
-// updated this js since I already have the routes to keep this separate
-const express = require("express");
-const employeesRouter = require("./routes/employees");
+//ESM
+import express from "express";
+import employeesRouter from "./routes/employees.js";
 
 const app = express();
 
-// JSON body parsing (needed for POST /employees)
+// Body parsing for JSON requests
 app.use(express.json());
 
-// root route
+// Root route (kept from v1)
 app.get("/", (_req, res) => {
   res.send("Hello employees");
 });
 
-// mount all /employees routes here
+// Mount all /employees routes
 app.use("/employees", employeesRouter);
 
-// catch-all error handler (500 for uncaught)
+// Catch-all error handler — sends 500 for uncaught errors
 app.use((err, _req, res, _next) => {
   console.error(err);
   const status = err.status || 500;
@@ -24,4 +24,5 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-module.exports = app;
+export default app;
+

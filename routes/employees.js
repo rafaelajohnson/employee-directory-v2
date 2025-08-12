@@ -1,32 +1,46 @@
 
-const express = require("express");
-const path = require("path");
+import { Router } from "express";
+import { readFileSync } from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-// load the shared in-memory array
-const employees = require(path.resolve(__dirname, "..", "db", "employees.json"));
+// __dirname shim for ESM had to check how to do this 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const router = express.Router();
+// Load the JSON array once 
+const dataPath = path.resolve(__dirname, "..", "db", "employees.json");
+const employees = JSON.parse(readFileSync(dataPath, "utf-8"));
 
-// GET /employees -> list all
+const router = Router();
+
+/** GET /employees -> list all employees */
 router.get("/", (_req, res) => {
   res.json(employees);
 });
 
-// define /random BEFORE /:id so "random" isn't treated as an id
+/** GET /employees/random -> one random employee
+ *  NOTE: define before "/:id" so "random" isn't treated as an id.
+ */
 router.get("/random", (_req, res) => {
   const idx = Math.floor(Math.random() * employees.length);
   res.json(employees[idx]);
 });
 
-// GET /employees/:id -> one or 404
+/** GET /employees/:id -> employee or 404 */
 router.get("/:id", (req, res) => {
   const id = Number(req.params.id);
-  const found = employees.find(e => Number(e.id) === id);
+  const found = employees.find((e) => Number(e.id) === id);
   if (!found) return res.status(404).json({ message: `No employee with id ${id}` });
   res.json(found);
 });
 
-// POST /employees -> create new employee
+/** POST /employees -> create employee
+ *  - requires "name" (string, non-empty)
+ *  - generates unique id (max+1)
+ *  - 201 with the new employee
+ *  - 400 if invalid
+ */
 router.post("/", (req, res, next) => {
   try {
     const name = req.body?.name;
@@ -34,9 +48,8 @@ router.post("/", (req, res, next) => {
       return res.status(400).json({ message: "Valid 'name' is required" });
     }
 
-    // unique id: max existing id + 1
     const nextId =
-      employees.length ? Math.max(...employees.map(e => Number(e.id) || 0)) + 1 : 1;
+      employees.length ? Math.max(...employees.map((e) => Number(e.id) || 0)) + 1 : 1;
 
     const newEmployee = { id: nextId, name: name.trim() };
     employees.push(newEmployee);
@@ -46,4 +59,4 @@ router.post("/", (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;
