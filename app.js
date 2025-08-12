@@ -1,34 +1,27 @@
-import express from "express";
+// updated this js since I already have the routes to keep this separate
+const express = require("express");
+const employeesRouter = require("./routes/employees");
+
 const app = express();
-export default app;
 
-import employees from "#db/employees";
+// JSON body parsing (needed for POST /employees)
+app.use(express.json());
 
-app.route("/").get((req, res) => {
-  res.send("Hello employees!");
+// root route
+app.get("/", (_req, res) => {
+  res.send("Hello employees");
 });
 
-app.route("/employees").get((req, res) => {
-  res.send(employees);
+// mount all /employees routes here
+app.use("/employees", employeesRouter);
+
+// catch-all error handler (500 for uncaught)
+app.use((err, _req, res, _next) => {
+  console.error(err);
+  const status = err.status || 500;
+  res.status(status).json({
+    message: status === 500 ? "Internal Server Error" : err.message,
+  });
 });
 
-// Note: this middleware has to come first! Otherwise, Express will treat
-// "random" as the argument to the `id` parameter of /employees/:id.
-app.route("/employees/random").get((req, res) => {
-  const randomIndex = Math.floor(Math.random() * employees.length);
-  res.send(employees[randomIndex]);
-});
-
-app.route("/employees/:id").get((req, res) => {
-  const { id } = req.params;
-
-  // req.params are always strings, so we need to convert `id` into a number
-  // before we can use it to find the employee
-  const employee = employees.find((e) => e.id === +id);
-
-  if (!employee) {
-    return res.status(404).send("Employee not found");
-  }
-
-  res.send(employee);
-});
+module.exports = app;
