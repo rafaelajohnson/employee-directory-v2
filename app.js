@@ -9,7 +9,7 @@ app.use(express.json());
 
 // Root route (kept from v1)
 app.get("/", (_req, res) => {
-  res.send("Hello employees");
+  res.send("Hello employees!");
 });
 
 // Mount all /employees routes
